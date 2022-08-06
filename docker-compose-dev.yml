@@ -1,0 +1,95 @@
+version: '3'
+
+services:
+  django_service:
+    # os起動時(Docker起動時)にコンテナを再起動さる場合
+    # restart: always
+    
+    # ComposeFileを実行しビルドされるときのルートパス
+    # このフォルダにDockerファイルを置く
+    build:
+        context: ./sample07_django
+        # target: aws_builder
+        # target: local_builder
+        target: local_develop
+        dockerfile: ./docker/Dockerfile
+
+    hostname: sample07_django
+
+    # コンテナ名
+    container_name: 'sample07_django'
+    
+    # コンテナ内のワーキングディレクトリ 
+    # これを有効にするとDocker側にも影響が出るため基本定義しない方がよい。
+    # 開発の場合はよいけど。
+    #working_dir: /sample07_django
+    
+    # コンテナを終了させたくない場合に設定
+    tty: true
+    ports:
+      - 8000:8000
+
+    # マウント
+    volumes:
+      - ./sample07_django:/sample07_django
+    #
+    # Nginx経由で連携するためこちらのポート開放は不要
+    # PORT開放
+    # expose:
+    #   - "8000"
+
+    # 下段のmysal_serviceが起動されるのを待つ
+    depends_on:
+     - mysal_service
+
+  #----------------------------------------------------
+  #MYSQL
+  #----------------------------------------------------
+  mysal_service:
+
+    hostname: sample07_mysql
+
+    # コンテナ名
+    container_name: 'sample07_mysql'
+    build:
+        context: ./sample07_mysql
+        dockerfile: ./docker/Dockerfile
+    platform: linux/x86_64
+    tty: true
+    #ports:
+    #  - "3306:3306"
+    env_file:
+      - ./sample07_mysql/env/.env_mysql
+    volumes:
+      - ./sample07_mysql/mysql-data:/var/lib/mysql
+      # 初期処理実行スクリプト配備
+      #- type: bind
+      #  source: ./init
+      #  target: /docker-entrypoint-initdb.d
+
+#
+#  nginx:
+#    build:
+#        context: ./sample07_nginx
+#        # target: aws_builder
+#        target: local_builder
+#        dockerfile: ./docker/Dockerfile
+#
+#    # Hostname
+#    hostname: nginx_sample07_local
+#
+#    # コンテナ名
+#    container_name: 'nginx_sample07_local'
+#
+#    ports:
+#     - "80:80"
+#
+#    # ここをDjango PRJからマウントする
+#    # volumes:
+#    #   - ./sample05_docker/myproject/static:/static
+#    #
+#    # 下段のdjango_serviceが起動されるのを待つ
+#    depends_on:
+#     - django_service
+
+
